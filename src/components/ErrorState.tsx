@@ -13,7 +13,7 @@ export function ErrorState({ message, onRetry }: ErrorStateProps) {
       animate={{ opacity: 1, scale: 1 }}
       className="error-state glass-card"
     >
-      <AlertTriangle size={32} className="error-state__icon" />
+      <AlertTriangle size={32} className="error-state__icon" color="red" />
       <p className="error-state__message">{message}</p>
       {onRetry && (
         <button onClick={onRetry} className="error-state__retry">

@@ -20,8 +20,13 @@ export interface CurrentWeather {
   conditionLabel: string;
   humidity: number;
   windSpeed: number;
+  windKph?: number;
+  windMph?: number;
   visibility: number;
   pressure: number;
+  uvIndex?: number;
+  sunrise?: string;
+  sunset?: string;
   iconCode: string;
   isDay: boolean;
   localTime: string;

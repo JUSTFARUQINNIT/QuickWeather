@@ -1,16 +1,14 @@
 import { useCallback, useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Navigation } from "lucide-react";
 import { toast } from "sonner";
-// import logo from "./assets/logo.png";
-import { AppLayout } from "./components/AppLayout";
+import { MainLayout } from "./components/MainLayout";
+import { CurrentWeatherCard } from "./components/CurrentWeatherCard";
+import { TodayHighlights } from "./components/TodayHighlights";
+import { TodayWeekForecast } from "./components/TodayWeekForecast";
+import { SunTimesCard } from "./components/SunTimesCard";
+import { OtherCities } from "./components/OtherCities";
 import { ErrorState } from "./components/ErrorState";
-import { ForecastCard } from "./components/ForecastCard";
 import { LoadingState } from "./components/LoadingState";
-import { SearchBar } from "./components/SearchBar";
-import { UnitToggle } from "./components/UnitToggle";
-import { WeatherAdvice } from "./components/WeatherAdvice";
-import { WeatherCard } from "./components/WeatherCard";
 import { useGeolocation } from "./hooks/useGeolocation";
 import {
   fetchCurrentWeather,
@@ -94,6 +92,18 @@ const Home = () => {
     }
   };
 
+  const handleCitySelect = (city: string) => {
+    fetchByCity(city);
+  };
+
+  // Mock other cities data
+  const otherCities = [
+    { name: "London", temp: 15, condition: "Cloudy", icon: "cloud" },
+    { name: "Tokyo", temp: 22, condition: "Clear", icon: "sun" },
+    { name: "Paris", temp: 18, condition: "Rainy", icon: "rain" },
+    { name: "Sydney", temp: 12, condition: "Windy", icon: "wind" },
+  ];
+
   const bgTheme = weather
     ? getBackgroundTheme(weather.condition, weather.isDay)
     : {
@@ -103,11 +113,8 @@ const Home = () => {
   const isDay = weather?.isDay ?? true;
 
   return (
-    <AppLayout
-      // logoSrc={logo}
-      // title="QuickWeather"
-      headerRight={<UnitToggle unit={unit} onToggle={setUnit} />}
-      footerText="Powered by OpenWeatherMap · Real-time weather data"
+    <div
+      className="app-wrapper"
       style={{
         background: bgTheme.gradient,
         ["--dynamic-text" as any]: getTextColor(isDay),
@@ -116,51 +123,69 @@ const Home = () => {
         ["--dynamic-glass-border" as any]: getGlassBorder(isDay),
       }}
     >
-      <SearchBar
-        onSearch={fetchByCity}
-        onSelectCoords={(lat, lon) => fetchByCoords(lat, lon)}
-      />
-      {geo.loading && !weather && <LoadingState />}
-      {loading && !weather && !geo.loading && <LoadingState />}
-      {error && !weather && (
-        <ErrorState message={error} onRetry={handleRetry} />
-      )}
+      <MainLayout
+        unit={unit}
+        onUnitToggle={setUnit}
+        onSearch={handleCitySelect}
+      >
+        {(geo.loading || loading || error) && !weather && (
+          <div className="loading-main">
+            {geo.loading && <LoadingState />}
+            {loading && !geo.loading && <LoadingState />}
+            {error && <ErrorState message={error} onRetry={handleRetry} />}
+          </div>
+        )}
+        {weather && !loading && (
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={weather.city}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="weather-content"
+            >
+              {geo.lat !== null && !searchedCity && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="location-badge"
+                >
+                  📍 Based on your location
+                </motion.div>
+              )}
+              <div className="weather-content-left">
+                <CurrentWeatherCard
+                  weather={weather}
+                  unit={unit}
+                  onUnitToggle={setUnit}
+                />
+                <div className="sun-forecast_main">
 
-      {weather && !loading && (
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={weather.city}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="weather-content"
-          >
-            {geo.lat !== null && !searchedCity && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="location-badge"
-              >
-                <Navigation size={14} />
-                <span>Based on your location</span>
-              </motion.div>
-            )}
-            <WeatherCard data={weather} unit={unit} />
-            <WeatherAdvice
-              condition={weather.condition}
-              tempC={weather.tempC}
-            />
-            <ForecastCard forecast={forecast} unit={unit} />
-          </motion.div>
-        </AnimatePresence>
-      )}
+                <TodayWeekForecast forecast={forecast} unit={unit} />
+                <SunTimesCard weather={weather} />
+                </div>
 
-      {loading && weather && (
-        <div className="loading-overlay">
-          <LoadingState />
-        </div>
-      )}
-    </AppLayout>
+              </div>
+
+              <div className="weather-content-left">
+                <TodayHighlights weather={weather} unit={unit} />
+                {/* <OtherCities
+                  cities={otherCities}
+                  unit={unit}
+                  onCitySelect={handleCitySelect}
+                  /> */}
+              </div>
+            </motion.div>
+          </AnimatePresence>
+        )}
+
+        {loading && weather && (
+          <div className="loading-overlay">
+            <LoadingState />
+          </div>
+        )}
+      </MainLayout>
+    </div>
   );
 };
 
